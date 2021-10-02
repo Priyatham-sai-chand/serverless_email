@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import { store } from "react-notifications-component";
 import axios from "axios";
 const EmailTemplate = () => {
+
   const [email, setEmail] = useState([]);
   const [name, setName] = useState([]);
   const [html, setHtml] = useState("");
   const [subject, setSubject] = useState("");
-  const [company_email, setCompany_Email] = useState("");
+  const [sender_email, setSender_Email] = useState("");
   const [webinar_link, setWebinarLink] = useState("");
 
   const notifyPopup = (title,message,type) => {
@@ -28,29 +29,34 @@ const EmailTemplate = () => {
 
 	async function handleSubmit(e) {
 		e.preventDefault();
-		var array = email.toString().split(",");
-		if (array == "") { notifyPopup("error","emails empty","danger"); }
-		var nameArray = name.toString().split(",");
-		if (nameArray == "") { notifyPopup("error","names empty","danger"); }
-
-    console.log(array);
-    console.log(company_email);
-    fetch("", {
+    var emailarray = email.toString().split(",");
+    emailarray = emailarray.map(value => value.trim())
+		if (emailarray == "") { notifyPopup("error","emails empty","danger"); }
+		var namearray = name.toString().split(",");
+    namearray = namearray.map(value => value.trim())
+		if (namearray == "") { notifyPopup("error","names empty","danger"); }
+		if (subject == "") { notifyPopup("error","subject empty","danger"); }
+		if (html == "") { notifyPopup("error","html empty","danger"); }
+		if (sender_email == "") { notifyPopup("error","sender email empty","danger"); }
+    console.log("emails "+emailarray)
+    console.log("names "+namearray)
+    console.log("html "+typeof(html))
+    console.log("subject "+typeof( subject ))
+    console.log("sender" + typeof(sender_email));
+    fetch("https://slb37ny1bh.execute-api.ap-south-1.amazonaws.com/prod/email_batcher", {
       method: "post",
-      headers: { "content-type": "application/json", "Access-Control-Allow-Origin":"*",},
       body: JSON.stringify({
-        emailArray: array,
-        nameArray,
-        template: html,
-        subject,
-        webinar_link,
-        company_email,
+        "email": emailarray,
+        "name": namearray,
+        "html": html,
+        "subject": subject,
+      "senderemail": sender_email
       }),
     })
       .then((res) => res.json())
       .then((result) => {
         console.log(result);
-        notifyPopup("error",result.message,"success");
+        notifyPopup("error",result.toString(),"success");
       });
   }
   return (
@@ -126,9 +132,9 @@ const EmailTemplate = () => {
                   type="text"
                   className="input my-4 "
                   placeholder="Enter company email"
-                  name="company_email"
-                  id="company_email"
-                  onChange={(e) => setCompany_Email(e.target.value)}
+                  name="sender_email"
+                  id="sender_email"
+                  onChange={(e) => setSender_Email(e.target.value)}
                 />
               </div>
 
