@@ -38,6 +38,7 @@ const EmailTemplate = () => {
 		if (subject == "") { notifyPopup("error","subject empty","danger"); }
 		if (html == "") { notifyPopup("error","html empty","danger"); }
 		if (sender_email == "") { notifyPopup("error","sender email empty","danger"); }
+
     console.log("emails "+emailarray)
     console.log("names "+namearray)
     console.log("html "+typeof(html))
@@ -53,11 +54,13 @@ const EmailTemplate = () => {
       "senderemail": sender_email
       }),
     })
-      .then((res) => res.json())
+      //.then((res) => res.json())
       .then((result) => {
         console.log(result);
-        notifyPopup("error",result.toString(),"success");
+        notifyPopup("Success",result.toString(),"success");
       });
+
+
   }
   return (
     <>
@@ -70,14 +73,14 @@ const EmailTemplate = () => {
             <div className="row">
               <div className="col-lg-6 col-md-6 col-sm-12 mx-auto">
                 <h3>Enter Email's</h3>
-                <h6>xyz@gmail.com,xxyyzz@cantileverlabs.com</h6>
+                <h6>xyz@gmail.com,xxyyzz@gmail.com</h6>
                 <textarea
                   id="email"
                   rows="10"
                   cols="50"
                   type="text"
                   className="input"
-                  placeholder="xyz@gmail.com,xxyyzz@cantileverlabs.com"
+                  placeholder="xyz@gmail.com,xxyyzz@gmail.com"
                   name="email"
                   onChange={(e) => setEmail(e.target.value)}
                 ></textarea>
@@ -105,7 +108,7 @@ const EmailTemplate = () => {
                   cols="50"
                   type="text"
                   className="input"
-                  placeholder="xyz verma,xyz sharma , jhon doe"
+                  placeholder="xyz verma,xyz sharma , john doe"
                   onChange={(e) => setName(e.target.value)}
                   name="name"
                 ></textarea>
