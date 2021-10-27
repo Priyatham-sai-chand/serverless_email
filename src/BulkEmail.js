@@ -54,7 +54,7 @@ const EmailTemplate = () => {
       "senderemail": sender_email
       }),
     })
-      //.then((res) => res.json())
+      .then((res) => res.json())
       .then((result) => {
         console.log(result);
         notifyPopup("Success",result.toString(),"success");
