@@ -57,6 +57,7 @@ const EmailTemplate = () => {
 
       })
       //var common = emailarray.filter(x => bouncedarray.indexOf(x) !== -1)
+    if (!bounced_emails.length) { setDeliveredEmails(emailarray);}
     setLoading(true);
   }
   useEffect(() => {
@@ -67,6 +68,7 @@ const EmailTemplate = () => {
       var common = emailarray.filter(x => !bouncedarray.includes(x))
           console.log("common array ", common)
     setDeliveredEmails([])
+    //if (!bounced_emails.length) { setDeliveredEmails(emailarray); return; }
         common.forEach((value, index) => {
           setDeliveredEmails(oldArray => [...oldArray,value.concat(',')] );
         });
