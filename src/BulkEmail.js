@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { store } from "react-notifications-component";
-import axios from "axios";
 const EmailTemplate = () => {
 
   const [email, setEmail] = useState([]);
   const [name, setName] = useState([]);
   const [html, setHtml] = useState("");
+  const [loading, setLoading] = useState(false);
   const [subject, setSubject] = useState("");
   const [sender_email, setSender_Email] = useState("");
-  const [webinar_link, setWebinarLink] = useState("");
-
+  const [bounced_emails, setBouncedEmails] = useState([]);
+  const [delivered_emails, setDeliveredEmails] = useState([]);
   const notifyPopup = (title,message,type) => {
     store.addNotification({
       title:title ,
@@ -27,24 +27,18 @@ const EmailTemplate = () => {
     });
   };
 
+    var emailarray = email.toString().split(",");
 	async function handleSubmit(e) {
 		e.preventDefault();
-    var emailarray = email.toString().split(",");
     emailarray = emailarray.map(value => value.trim())
-		if (emailarray == "") { notifyPopup("error","emails empty","danger"); }
+		if (!email.length) { notifyPopup("error","emails empty","danger"); return;}
 		var namearray = name.toString().split(",");
     namearray = namearray.map(value => value.trim())
-		if (namearray == "") { notifyPopup("error","names empty","danger"); }
-		if (subject == "") { notifyPopup("error","subject empty","danger"); }
-		if (html == "") { notifyPopup("error","html empty","danger"); }
-		if (sender_email == "") { notifyPopup("error","sender email empty","danger"); }
-
-    console.log("emails "+emailarray)
-    console.log("names "+namearray)
-    console.log("html "+typeof(html))
-    console.log("subject "+typeof( subject ))
-    console.log("sender" + typeof(sender_email));
-    fetch("https://slb37ny1bh.execute-api.ap-south-1.amazonaws.com/prod/email_batcher", {
+		if (subject === "") { notifyPopup("error","subject empty","danger"); return;}
+		if (html === "") { notifyPopup("error","html empty","danger"); return;}
+    if (sender_email === "") { notifyPopup("error", "sender email empty", "danger"); return; }
+    //setBouncedEmails([])
+   await  fetch("https://slb37ny1bh.execute-api.ap-south-1.amazonaws.com/prod/email_batcher", {
       method: "post",
       body: JSON.stringify({
         "email": emailarray,
@@ -57,14 +51,52 @@ const EmailTemplate = () => {
       .then((res) => res.json())
       .then((result) => {
         console.log(result);
-        notifyPopup("Success",result.toString(),"success");
-      });
+          result.forEach((value, index) => {
+            setBouncedEmails(oldArray => [...oldArray, value.email.slice(2, -2).concat(',')]);
+          });
 
-
+      })
+      //var common = emailarray.filter(x => bouncedarray.indexOf(x) !== -1)
+    setLoading(true);
   }
+  useEffect(() => {
+
+    var bouncedarray = bounced_emails.toString().split(',')
+    bouncedarray = bouncedarray.map(value => value.trim())
+          console.log("bounce array ", bouncedarray)
+      var common = emailarray.filter(x => !bouncedarray.includes(x))
+          console.log("common array ", common)
+    setDeliveredEmails([])
+        common.forEach((value, index) => {
+          setDeliveredEmails(oldArray => [...oldArray,value.concat(',')] );
+        });
+  },[bounced_emails])
+  useEffect(() => {
+
+          console.log("delivered ", delivered_emails )
+  },[delivered_emails])
   return (
     <>
       <div className="container shadow-sm mx-auto ">
+        {loading ?
+        <>
+
+              <div className="col-lg-6 col-md-6 col-sm-12 mx-auto">
+                <h3>Delivered emails</h3>
+          {delivered_emails}
+              </div>
+
+              <div className="col-lg-6 col-md-6 col-sm-12 mx-auto">
+                <h3>Bounced Emails</h3>
+          {bounced_emails}
+              </div>
+            <button className="btn btn-secondary my-5" onClick={() => window.location.reload(false)} >
+              send more emails!
+            </button>
+              </>
+              :
+
+              <>
         <h1 className="text-center font-weight-bold">
           Email Template to Recipients
         </h1>
@@ -149,7 +181,12 @@ const EmailTemplate = () => {
               Submit!
             </button>
           </form>
+          {bounced_emails}
         </div>
+        </>
+      }
+
+
       </div>
     </>
   );
