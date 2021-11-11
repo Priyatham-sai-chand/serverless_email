@@ -6,6 +6,7 @@ const EmailTemplate = () => {
   const [name, setName] = useState([]);
   const [html, setHtml] = useState("");
   const [loading, setLoading] = useState(false);
+  const [data_loading, setDataLoading] = useState(false);
   const [subject, setSubject] = useState("");
   const [sender_email, setSender_Email] = useState("");
   const [bounced_emails, setBouncedEmails] = useState([]);
@@ -28,6 +29,7 @@ const EmailTemplate = () => {
   };
 
     var emailarray = email.toString().split(",");
+    emailarray = emailarray.filter(function (e) { return e });
 	async function handleSubmit(e) {
 		e.preventDefault();
     emailarray = emailarray.map(value => value.trim())
@@ -38,6 +40,7 @@ const EmailTemplate = () => {
 		if (html === "") { notifyPopup("error","html empty","danger"); return;}
     if (sender_email === "") { notifyPopup("error", "sender email empty", "danger"); return; }
     //setBouncedEmails([])
+    setLoading(true);
    await  fetch("https://slb37ny1bh.execute-api.ap-south-1.amazonaws.com/prod/email_batcher", {
       method: "post",
       body: JSON.stringify({
@@ -51,28 +54,44 @@ const EmailTemplate = () => {
       .then((res) => res.json())
       .then((result) => {
         console.log(result);
+        console.log(result.length);
+        if(result.length)
           result.forEach((value, index) => {
-            setBouncedEmails(oldArray => [...oldArray, value.email.slice(2, -2).concat(',')]);
+            setBouncedEmails(oldArray => [...oldArray, value.email.slice(2, -2)]);
           });
 
       })
       //var common = emailarray.filter(x => bouncedarray.indexOf(x) !== -1)
-    if (!bounced_emails.length) { setDeliveredEmails(emailarray);}
-    setLoading(true);
+    setLoading(false);
+    setDataLoading(true);
   }
+
   useEffect(() => {
 
     var bouncedarray = bounced_emails.toString().split(',')
-    bouncedarray = bouncedarray.map(value => value.trim())
+    //bouncedarray = bouncedarray.map(value => value.trim())
+    bouncedarray = bouncedarray.filter(function (e) { return e });
           console.log("bounce array ", bouncedarray)
+      console.log("bounced array count", bounced_emails.length)
+      console.log("email array ", emailarray)
+    if (bounced_emails.length !== 0) {
       var common = emailarray.filter(x => !bouncedarray.includes(x))
-          console.log("common array ", common)
+      console.log("common with bounced array ", common)
     setDeliveredEmails([])
-    //if (!bounced_emails.length) { setDeliveredEmails(emailarray); return; }
-        common.forEach((value, index) => {
-          setDeliveredEmails(oldArray => [...oldArray,value.concat(',')] );
+        common.forEach((value, index) => { setDeliveredEmails(oldArray => [...oldArray,value] );
         });
-  },[bounced_emails])
+    }
+    if(bounced_emails.length === 0 && emailarray.length !== 0){
+          console.log(" else bounce array ", bouncedarray)
+      console.log(" else bounced array count", bounced_emails.length)
+      console.log(" else email array ", emailarray)
+    setDeliveredEmails([])
+      emailarray.forEach((value, index) => {
+        console.log("email with no bounces", value); setDeliveredEmails(oldArray => [...oldArray,value] );
+        })
+    }
+    //if (!bounced_emails.length) { setDeliveredEmails(emailarray); return; }
+  },[data_loading])
   useEffect(() => {
 
           console.log("delivered ", delivered_emails )
@@ -80,18 +99,51 @@ const EmailTemplate = () => {
   return (
     <>
       <div className="container shadow-sm mx-auto ">
-        {loading ?
+      {loading ?
+          <>
+          <div className="row">
+              <div className="col-lg-12 col-md-12 col-sm-12 mx-auto">
+          <div className="spinner-border text-primary" role="status">
+  <span className="visually-hidden">Loading...</span>
+  </div>
+          </div>
+          </div>
+          </> :
+          <>
+{data_loading ?
         <>
 
+            <div className="row">
+        <h1 className="text-center font-weight-bold">
+          Sent Details
+        </h1>
               <div className="col-lg-6 col-md-6 col-sm-12 mx-auto">
                 <h3>Delivered emails</h3>
-          {delivered_emails}
+
+                    {delivered_emails.length !== 0 ? (<div className="alert alert-success">
+                      <ul>
+{delivered_emails.map((item,index) =>
+  <li key={index}style={{wordWrap: 'break-word'}}>{item} </li>
+)}
+</ul>
+
+                    </div>) : (<div className="alert alert-info"><h5>No emails sent</h5></div>)}
+
               </div>
 
               <div className="col-lg-6 col-md-6 col-sm-12 mx-auto">
                 <h3>Bounced Emails</h3>
-          {bounced_emails}
+                    {bounced_emails.length !== 0 ? (<div className="alert alert-success">
+                      <ul>
+{bounced_emails.map((item,index) =>
+    <li key={index}style={{wordWrap: 'break-word'}}>{item}</li>
+)}
+</ul>
+
+
+                    </div>) : (<div className="alert alert-info"><h5>No bounces</h5></div>)}
               </div>
+</div>
             <button className="btn btn-secondary my-5" onClick={() => window.location.reload(false)} >
               send more emails!
             </button>
@@ -162,17 +214,12 @@ const EmailTemplate = () => {
                 ></textarea>
               </div>
               <div className="col-lg-6 col-md-6 col-sm-12 mx-auto">
-                <h3>Enter sender's Email</h3>
-                <h6>nametodisplay  &lt;email-id&gt;</h6>
-                <p>email in angular brackets</p>
-                <input
-                  type="text"
-                  className="input my-4 "
-                  placeholder="Enter company email"
-                  name="sender_email"
-                  id="sender_email"
-                  onChange={(e) => setSender_Email(e.target.value)}
-                />
+                <h3>Select sender's Email</h3>
+                        <select id="sender_email" value={sender_email} onChange={(e) => setSender_Email(e.target.value)}>
+                          <option value="" selected> Select an email </option>
+  <option key="1" value="Priyatham AWS <priyathamsaichand@gmail.com>" default>Priyatham AWS &lt;priyathamsaichand@gmail.com&gt;</option>
+  <option key="2"value="Priyatham MGIT <bpriyathamsaichand_cse180508@mgit.ac.in>">Priyatham MGIT &lt;bpriyathamsaichand_cse180508@mgit.ac.in&gt;</option>
+</select>
               </div>
 
             </div>
@@ -187,6 +234,11 @@ const EmailTemplate = () => {
         </div>
         </>
       }
+
+
+          </>
+        }
+
 
 
       </div>
