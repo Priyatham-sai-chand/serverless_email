@@ -27,6 +27,9 @@ const EmailTemplate = () => {
       },
     });
   };
+const sleep = (milliseconds) => {
+  return new Promise(resolve => setTimeout(resolve, milliseconds))
+}
 
     var emailarray = email.toString().split(",");
     emailarray = emailarray.filter(function (e) { return e });
@@ -40,6 +43,7 @@ const EmailTemplate = () => {
 		if (html === "") { notifyPopup("error","html empty","danger"); return;}
     if (sender_email === "") { notifyPopup("error", "sender email empty", "danger"); return; }
     //setBouncedEmails([])
+    console.log("sender email", sender_email)
     setLoading(true);
    await  fetch("https://slb37ny1bh.execute-api.ap-south-1.amazonaws.com/prod/email_batcher", {
       method: "post",
@@ -50,6 +54,24 @@ const EmailTemplate = () => {
         "subject": subject,
       "senderemail": sender_email
       }),
+    })
+      .then((res) => res.json())
+     .then((result) => {
+       notifyPopup("success", result.toString(), "danger");
+
+     })
+     if(emailarray.length < 100)await sleep(emailarray.length * 2000);
+
+     else if(100 <= emailarray.length < 1000){
+    await sleep(emailarray.length * 200);
+    }
+     else {
+    await sleep(emailarray.length * 400);
+    }
+
+    await fetch("https://slb37ny1bh.execute-api.ap-south-1.amazonaws.com/prod/bounce_db", {
+      method: "post",
+      body: JSON.stringify({}),
     })
       .then((res) => res.json())
       .then((result) => {
@@ -217,7 +239,7 @@ const EmailTemplate = () => {
                 <h3>Select sender's Email</h3>
                         <select id="sender_email" value={sender_email} onChange={(e) => setSender_Email(e.target.value)}>
                           <option value="" selected> Select an email </option>
-  <option key="1" value="Priyatham AWS <priyathamsaichand@gmail.com>" default>Priyatham AWS &lt;priyathamsaichand@gmail.com&gt;</option>
+  <option key="1" value="Priyatham AWS <priyathamsaichand@gmail.com>">Priyatham AWS &lt;priyathamsaichand@gmail.com&gt;</option>
   <option key="2"value="Priyatham MGIT <bpriyathamsaichand_cse180508@mgit.ac.in>">Priyatham MGIT &lt;bpriyathamsaichand_cse180508@mgit.ac.in&gt;</option>
 </select>
               </div>
